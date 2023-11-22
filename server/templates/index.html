@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Generation Grid</title>
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); 
+            grid-gap: 2px;
+            margin-left: 50px; 
+            margin-top: 20px;
+        }
+        .grid-cell {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        .active {
+            background-color: #4CAF50; 
+        }
+        .y-axis-labels, .x-axis-labels {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+        .y-axis-labels {
+            flex-direction: column-reverse;
+            align-items: center;
+            height: 320px; 
+            left: 10px;
+            top: 50px;
+        }
+        .x-axis-labels {
+            margin-top: 5px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .average-display {
+            margin-top: 10px;
+            margin-left: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="y-axis-labels">
+     
+    </div>
+    <div class="grid-container">
+    
+    </div>
+    <div class="x-axis-labels">
+     
+    </div>
+    <div class="average-display">
+        <span id="current-average">Current Average (T6): 0</span><br>
+        <span id="overall-average">Overall Average (Average of Averages): 0</span>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        let generation = 1;
+        let maxGenerations = 10;
+
+        function colorGridCell(x, y) {
+            let cellId = '#cell-' + ((y - 1) * maxGenerations + x);
+            $(cellId).addClass('active').text(y);
+        }
+
+        function fetchData() {
+            $.ajax({
+                url: '/data',
+                type: 'GET',
+                success: function(res) {
+                  
+                    $('.grid-cell').removeClass('active').text('');
+                    
+                
+                    let yAxisLabels = $('.y-axis-labels');
+                    yAxisLabels.empty();
+                    for (let number of res.numbers) {
+                        yAxisLabels.append('<div>' + number + '</div>');
+                    }
+                    
+                 
+                    let xAxisLabels = $('.x-axis-labels');
+                    xAxisLabels.empty();
+                    for (let timestamp of res.timestamps) {
+                        xAxisLabels.append('<div>' + timestamp + '</div>'); 
+                    }
+                    
+                   
+                    for (let i = 0; i < res.numbers.length; i++) {
+                        colorGridCell(i + 1, res.numbers[i]);
+                    }
+
+               
+                    $('#current-average').text('Current Average (T6): ' + res.current_average.toFixed(2));
+                    $('#overall-average').text('Overall Average (Average of Averages): ' + res.overall_average.toFixed(2));
+                },
+                error: function(error) {
+                    console.error("Error fetching data: ", error);
+                }
+            });
+        }
+
+
+        function setupGrid() {
+            let gridContainer = $('.grid-container');
+            for (let y = 10; y >= 1; y--) {
+                for (let x = 1; x <= maxGenerations; x++) {
+                    gridContainer.append('<div class="grid-cell" id="cell-' + ((y - 1) * maxGenerations + x) + '"></div>');
+                }
+            }
+        }
+
+        setupGrid();
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>
